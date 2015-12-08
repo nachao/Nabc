@@ -1,0 +1,330 @@
+
+	<head>
+		<style>
+			
+			#nCount {
+				width: 300px;
+			}
+			#nCount .temp {
+				display: inline-block;
+				width: 20%;
+				line-height: 33px;
+				text-align: center;
+				color: black;
+				text-decoration: none;
+				font-family: Arial;
+				float: left;
+				font-size: 12px;
+			}
+			#nCount .temp:hover{
+				background-color: #eee;
+			}
+
+		</style>
+	</head>
+
+	<div id="nCount">
+		<div id="nCountContain"></div>
+		<a id="nCountTemplate" href="#"></a>
+	</div>
+
+	<table id="nTable"></table>
+
+<script src="../Cmap/Js/jquery-1.11.0.min.js"></script>
+<script src="./na.object-1.0.js"></script>
+<script>
+
+
+
+	var data = [
+		    {
+		        id: '1',
+		        name: 'car',
+		        color: '#008D38',
+		        tracker_qty: 1,
+		        trackers: [ "89600FFFFF0000000030", '77777777777777777777', '89600FFFFF0000000028' ]
+		    },{
+		        id: '2',
+		        name: 'battery car',
+		        color: '#464CE0',
+		        tracker_qty: 2,
+		        trackers: [ "89600FFFFF0000000030" ]
+		    },{
+		        id: '3',
+		        name: 'headstock',
+		        color: '#FFA500',
+		        tracker_qty: 3,
+		        trackers: [ '89600FFFFF0000000024', '89600FFFFF0000000028' ]
+		    },{
+		        id: '4',
+		        name: 'carriage',
+		        color: '#8AB02C',
+		        tracker_qty: 1,
+		        trackers: [ '89600FFFFF0000000024' ]
+		    },{
+		        id: '5',
+		        name: 'train',
+		        color: '#EA1080',
+		        tracker_qty: 1,
+		        trackers: [ '89600FFFFF0000000025', '89600FFFFF0000000026','89600FFFFF0000000027','89600FFFFF0000000028' ]
+		    },{
+		        id: '6',
+		        name: 'bus',
+		        color: '#159CA2',
+		        tracker_qty: 1,
+		        trackers: [ '89600FFFFF0000000031' ]
+		    }
+		]
+	
+
+
+	var abc = new Nabc();
+
+
+	abc.add(data);
+
+
+	console.log( abc.get(['1', '2', '3'], 'search') );
+
+	// abc.get(function(item){
+
+	// }, 'search');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// var nCountData = [];
+
+	// for ( var i = 0; i <= 25; i++ ) {
+	// 	nCountData.push({
+	// 		id: i,
+	// 		val: i
+	// 	})
+	// }
+
+
+
+
+
+	// 创建一个功能：数数
+	// var nCount = new Nabc({
+	// 		contain: $('#nCountContain'),
+	// 		template: $('#nCountTemplate').removeAttr('id').addClass('temp')
+	// 	});
+
+
+	// 初始化元素及显示
+	// nCount.on('add', function(obj){
+	// 	var el = nCount.param('template').clone();
+	// 	nCount.param('contain').append(el);
+	// 	el.html(obj.val);
+	// 	obj._el(el);
+	// });
+
+
+	// 初始化元素事件
+	// nCount.on('el', function(obj){
+	// 	obj.el.click(function(){
+	// 		obj.val += 1;
+	// 		obj.el.html(obj.val += 1);
+	// 	});
+	// });
+
+
+
+	// nCount.add(nCountData);
+
+
+
+	// console.log(nCount);
+
+/*
+
+	// 初始化数据
+	var data2 = [
+			{ name: '刘一', age: 18, sex: 0 },
+			{ name: '陈二', age: 15, sex: 1 },
+			{ name: '张三', age: 23, sex: 0 },
+			{ name: '李四', age: 22, sex: 0 },
+			{ name: '王五', age: 18, sex: 1 },
+			{ name: '赵六', age: 24, sex: 0 },
+			{ name: '孙七', age: 22, sex: 1 },
+			{ name: '周八', age: 25, sex: 1 },
+			{ name: '吴九', age: 21, sex: 1 },
+			{ name: '郑十', age: 29, sex: 1 },
+		];
+
+
+	var nTable = new Nabc();
+
+
+
+
+	//设置初始化参数
+	nTable.set({
+		key: 'name',
+		table: $('#nTable'),
+
+		// 定义每行模板
+		template: [
+			'<input type="text" value="{{name}}" />',
+			'{{age}}',
+			{
+				val: '{{sex}}',
+				init: function ( td, obj ) {
+					if ( obj.sex ) {
+						td.html('男');
+					} else {
+						td.html('女');
+					}
+				}
+			},
+			{
+				val: '<a href="javascript:;" >确认</a>',
+				a: function ( el, obj ) {
+					el.click(function(){
+						obj._set({ name: obj.el.find('input').val() });
+						console.log(obj);
+					});
+				}
+			},
+			
+		],
+
+
+		// 创建tr
+		createRow: function ( obj ) {
+			var tr = $(document.createElement('tr')),
+				data = obj._get();
+
+			$(this.template).each(function(i, item){
+				var html = item;
+
+				if ( $.isPlainObject(item) )
+					html = item.val;
+
+				for ( var key in data )
+					html = html.replace('{{'+ key +'}}', data[key]);
+
+				tr.append('<td>'+ html +'</td>');
+			});
+
+			return tr;
+		},
+
+
+		// 创建tr
+		createRow: function ( obj ) {
+			var tr = $(document.createElement('tr')),
+				data = obj._get();
+
+			$(this.template).each(function(i, item){
+				var html = item;
+
+				if ( $.isPlainObject(item) )
+					html = item.val;
+
+				for ( var key in data )
+					html = html.replace('{{'+ key +'}}', data[key]);
+
+				tr.append('<td>'+ html +'</td>');
+			});
+
+			return tr;
+		},
+
+
+		// 隐藏全部
+		hideAll: function () {
+
+		}
+	})
+
+
+	// 初始化数据
+	nTable.on('add', function ( obj, param ) {
+		var tr = param.createRow(obj);
+		param.table.append(tr);
+		obj._el(tr);
+	});
+
+
+	// 初始化数据
+	nTable.on('el', function ( obj, param ) {
+		if ( isObj ) {
+			for ( var key in item ) {
+				if ( key == 'init' )
+					item.init(td, obj);
+				else if ( td.find(key).length )
+					item[key](td.find(key), obj);
+			}
+		}
+	});
+
+
+
+				
+
+	// console.log( nTable.get({
+	// 	page: 0,
+	// 	number: 3
+	// }) );
+
+
+	// 导入数据
+	nTable.add(data);
+
+
+	nTable.get()._hide();
+
+
+	result = nTable.get('张三', 'search');
+
+
+
+
+
+
+	// var result = nTable.get('1', 'search');
+
+	console.log(result);
+
+	// nTable.get({
+	// 	number: 3,
+	// 	page: 0,
+	// 	objs: result
+	// })._show(true);
+
+	// result._show(true);
+
+	// console.dir(result);
+
+
+	// console.log(nTable);
+
+
+	// 导入数据
+	// nb.add(data);
+
+
+	// nb.add({
+	// });
+
+	// console.log(nb);
+*/
+
+</script>
