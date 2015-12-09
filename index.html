@@ -1,5 +1,6 @@
 
 	<head>
+		<meta charset="utf-8" />
 		<style>
 			
 			#nCount {
@@ -30,7 +31,7 @@
 
 	<table id="nTable"></table>
 
-<script src="../Cmap/Js/jquery-1.11.0.min.js"></script>
+<script src="./jquery-1.11.0.min.js"></script>
 <script src="./na.object-1.0.js"></script>
 <script>
 
@@ -78,10 +79,15 @@
 	
 
 
-	var abc = new Nabc();
+	var abc = new Abc();
 
 
 	abc.add(data);
+
+
+	$.get('http://localhost:8080', function(){
+
+	});
 
 
 	console.log( abc.get(['1', '2', '3'], 'search') );
