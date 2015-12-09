@@ -1,5 +1,5 @@
 /**
- * @name 自定义对象功能 na.object
+ * @name 自定义对象功能 na.object 
  * @version version 1.0
  * @author Na Chao
  * @fileoverview
