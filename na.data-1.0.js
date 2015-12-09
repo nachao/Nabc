@@ -4,11 +4,10 @@
  * @author Na Chao
  * @fileoverview
  * 	
- *	一个轻量级的前端数据及元素管理工具，可使用此工具编写模块界面或功能代码。
- *
- *	主要支持前端的数据增删改查等的快捷操作。
+ *	一个轻量级的前端数据管理工具，主要支持前端的数据增删改查等的快捷操作。
+ *	
  */
-function Nabc ( param ) {
+function nData ( param ) {
 
 	/**
 	*  初始化配置参数
@@ -65,7 +64,7 @@ function Nabc ( param ) {
 *  @return {object}
 *  @private
 */
-Nabc.prototype._Data_init = function ( value ) {
+nData.prototype._Data_init = function ( value ) {
 	var that = this,
 		data = $.extend({}, value);
 
@@ -107,7 +106,7 @@ Nabc.prototype._Data_init = function ( value ) {
 *  @return {object}
 *  @private
 */
-Nabc.prototype._Data_add = function ( value ) {
+nData.prototype._Data_add = function ( value ) {
 	var key;
 
 	if ( typeof value == 'object' ) {
@@ -128,7 +127,7 @@ Nabc.prototype._Data_add = function ( value ) {
 *  @return {array<object>}
 *  @private
 */
-Nabc.prototype._Data_adds = function ( values ) {
+nData.prototype._Data_adds = function ( values ) {
 	var that = this;
 
 	values.map(function(value){
@@ -146,7 +145,7 @@ Nabc.prototype._Data_adds = function ( values ) {
 *  @return {object}
 *  @private
 */
-Nabc.prototype._Data_getByKey = function ( key ) {
+nData.prototype._Data_getByKey = function ( key ) {
 	return this._Datas[key];
 }
 
@@ -158,7 +157,7 @@ Nabc.prototype._Data_getByKey = function ( key ) {
 *  @return {array<object>}
 *  @private
 */
-Nabc.prototype._Data_getByKeys = function ( keys ) {
+nData.prototype._Data_getByKeys = function ( keys ) {
 	var result = [],
 		that = this;
 
@@ -178,7 +177,7 @@ Nabc.prototype._Data_getByKeys = function ( keys ) {
 *  @return {array<object>} 
 *  @private
 */
-Nabc.prototype._Data_getBySearch = function ( value, param ) {
+nData.prototype._Data_getBySearch = function ( value, param ) {
 	param = param || {};
 
 	var result = [],
@@ -221,7 +220,7 @@ Nabc.prototype._Data_getBySearch = function ( value, param ) {
 *  @return {array<object>} 
 *  @private
 */
-Nabc.prototype._Data_getByPage = function ( param ) {
+nData.prototype._Data_getByPage = function ( param ) {
 	param = param || {};
 
 	var result = [],
@@ -242,7 +241,7 @@ Nabc.prototype._Data_getByPage = function ( param ) {
 *  @return {array<object>} 
 *  @private
 */
-Nabc.prototype._Data_getAll = function ( param ) {
+nData.prototype._Data_getAll = function ( param ) {
 	param = param || {};
 
 	var result = [],
@@ -270,7 +269,7 @@ Nabc.prototype._Data_getAll = function ( param ) {
 *  @return {string|object}
 *  @private
 */
-Nabc.prototype._Data_set = function ( obj, value ) {
+nData.prototype._Data_set = function ( obj, value ) {
 
 	if ( typeof obj == 'string' )
 		obj = this._Data_getByKey(obj);
@@ -292,7 +291,7 @@ Nabc.prototype._Data_set = function ( obj, value ) {
 *  @return {string|object}
 *  @private
 */
-Nabc.prototype._Data_delete = function ( obj ) {
+nData.prototype._Data_delete = function ( obj ) {
 
 	if ( typeof obj == 'string' )
 		obj = this._Data_getByKey(obj);
@@ -320,7 +319,7 @@ Nabc.prototype._Data_delete = function ( obj ) {
 *
 *  @private
 */
-Nabc.prototype._Styel_add = function () {
+nData.prototype._Styel_add = function () {
 
 }
 
@@ -340,7 +339,7 @@ Nabc.prototype._Styel_add = function () {
 *
 *  @private
 */
-Nabc.prototype._Comm_array = function ( value ) {
+nData.prototype._Comm_array = function ( value ) {
 	$.extend(value, {
 		_get: function () {
 			var result = [];
@@ -401,7 +400,7 @@ Nabc.prototype._Comm_array = function ( value ) {
 *
 *  @private
 */
-Nabc.prototype._Method_emit = function ( key, obj ) {
+nData.prototype._Method_emit = function ( key, obj ) {
 	var param = this._Param;
 	if ( this._Ons[key] ) {
 		$(this._Ons[key]).each(function(i, callback){
@@ -416,7 +415,21 @@ Nabc.prototype._Method_emit = function ( key, obj ) {
 *
 *  @private
 */
-Nabc.prototype._Method_setParam = function ( value ) {
+nData.prototype._Method_setParam = function ( value ) {
+	if ( $.isPlainObject(value) ) {
+		for ( var key in value ) {
+			this._Param[key] = value[key];
+		}
+	}
+}
+
+
+/**
+*  自定义数据扩展方法
+*
+*  @private
+*/
+nData.prototype._Method_extend = function ( event, callback, type ) {
 	if ( $.isPlainObject(value) ) {
 		for ( var key in value ) {
 			this._Param[key] = value[key];
@@ -445,7 +458,7 @@ Nabc.prototype._Method_setParam = function ( value ) {
 *
 *  @private
 */
-Nabc.prototype._Lib_init = function () {
+nData.prototype._Lib_init = function () {
 
 }
 
@@ -461,6 +474,23 @@ Nabc.prototype._Lib_init = function () {
 
 
 /**
+*  添加
+*
+*  @param {object|array<object>} value = 数据内容必须包含 id
+*  @return {object} 返回元素对象
+*  @private
+*/
+nData.prototype.add = function ( value ) {
+	if ( $.isPlainObject(value) )
+		this._Data_add(value);
+	else if ( $.isArray(value) )
+		this._Data_adds(value);
+
+	return value;
+}
+
+
+/**
 *  获取
 *
 *  @param {string|function|array} value = 需要获取的key值
@@ -469,7 +499,7 @@ Nabc.prototype._Lib_init = function () {
 *  @return {object} 返回元素对象
 *  @private
 */
-Nabc.prototype.get = function ( value, param ) {
+nData.prototype.get = function ( value, param ) {
 	var result,
 		conf = {};
 
@@ -513,30 +543,13 @@ Nabc.prototype.get = function ( value, param ) {
 
 
 /**
-*  添加
-*
-*  @param {object|array<object>} value = 数据内容必须包含 id
-*  @return {object} 返回元素对象
-*  @private
-*/
-Nabc.prototype.add = function ( value ) {
-	if ( $.isPlainObject(value) )
-		this._Data_add(value);
-	else if ( $.isArray(value) )
-		this._Data_adds(value);
-
-	return value;
-}
-
-
-/**
 *  设置
 *
 *  @param {object} value = 设置配置参数
-*  @return {object} 返回 Nabc 功能
+*  @return {object} 返回 nData 功能
 *  @private
 */
-Nabc.prototype.set = function ( value ) {
+nData.prototype.set = function ( value ) {
 	this._Method_setParam(value);
 }
 
@@ -546,10 +559,10 @@ Nabc.prototype.set = function ( value ) {
 *
 *  @param {string} key = 监听数据操作：set、del、add
 *  @param {function} callback = 监听操作发生时，执行的函数
-*  @return {object} 返回 Nabc 功能
+*  @return {object} 返回 nData 功能
 *  @private
 */
-Nabc.prototype.on = function ( key, callback ) {
+nData.prototype.on = function ( key, callback ) {
 	if ( typeof key == 'string' && $.isFunction(callback) ) {
 		if ( this._Ons[key] )
 			this._Ons[key].push(callback);
@@ -560,13 +573,14 @@ Nabc.prototype.on = function ( key, callback ) {
 
 
 /**
-*  获取功能参数
+*  扩展数据方法
 *
-*  @param {string} key = 需要获取的参数
-*  @return {*}
+*  @param {string} key = 监听数据操作：set、del、add
+*  @param {function} callback = 监听操作发生时，执行的函数
+*  @return {object} 返回 nData 功能
 *  @private
 */
-Nabc.prototype.param = function ( key ) {
-	if ( typeof key == 'string' )
-		return this._Param[key];
+nData.prototype.extend = function ( event, callback, type ) {
+	
 }
+
