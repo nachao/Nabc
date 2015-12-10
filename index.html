@@ -1,5 +1,6 @@
 
 	<head>
+		<meta charset="utf-8" />
 		<style>
 			
 			#nCount {
@@ -30,13 +31,13 @@
 
 	<table id="nTable"></table>
 
-<script src="../Cmap/Js/jquery-1.11.0.min.js"></script>
+<script src="./jquery-1.11.0.min.js"></script>
 <script src="./na.data-1.0.js"></script>
 <script>
 
 
 
-	var data = [
+	var datas = [
 		    {
 		        id: '1',
 		        name: 'car',
@@ -78,19 +79,23 @@
 	
 
 
-	var ndata = new nData();
+	var data = new nData();
 
 
-	ndata.add(data);
+	data.key('name', 'label');
+
+	data.add(datas, 'label');
+
+	data.add(100, 'number');
+
+	data.add('dahsouidyqwoiue120837019283熬时间的asjd123', 'string');
+
+	data.add({
+		val: [1,2,3]
+	}, 'array');
 
 
-	console.log( ndata );
-
-	// abc.get(function(item){
-
-	// }, 'search');
-
-
+	console.log( data );
 
 
 
