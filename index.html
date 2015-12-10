@@ -82,9 +82,13 @@
 	var data = new nData();
 
 
-	data.key('name', 'label');
+	data.set({
+		key: 'name'
+	});
 
-	data.add(datas, 'label');
+	data.add(datas);
+
+	data.add(datas, 'status');
 
 	data.add(100, 'number');
 
