@@ -3,7 +3,7 @@
 
 /**
  * @name 前端数据管理工具
- * @version version 1.0
+ * @version version 0.2
  * @author Na Chao
  * @fileoverview
  * 	
