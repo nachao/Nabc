@@ -14,18 +14,27 @@ function nData ( param ) {
 	*  @private
 	*/
 	this._Param = {
-		page: 0,		// 当前页数
-		number: 100		// 每页显示数量
+		page: 0,				// 当前页数
+		number: 100,			// 每页显示数量
+		main: 'default',		// 默认数据表
 	};
 
 
 	/**
-	*  功能数据
+	*  数据
 	*  @private
 	*/
 	this._Datas = {
-		_default: 'default',	// 默认管理数据表
-		default: {}				// 默认存储位置
+		// default: {}				// 默认存储位置
+	};
+
+
+	/**
+	*  自定义方法
+	*  @private
+	*/
+	this._Define = {
+		// default: {}				// 默认存储位置
 	};
 
 
@@ -48,6 +57,13 @@ function nData ( param ) {
 	*  @public
 	*/
 	this._Method_setParam(param);
+
+
+	/**
+	*  初始化数据方法
+	*  @public
+	*/
+	this._Method_default();
 }
 
 
@@ -64,20 +80,22 @@ function nData ( param ) {
 /**
 *  获取指定的数据表，并刷新数据长度
 *
-*  @param {string} classify = 选填，需要保存到的指定类，默认为 default
+*  @param {string} table = 选填，需要保存到的指定类，默认为 default
 *
 *  @return {object}
 *  @private
 */
-nData.prototype._Data_classify = function ( classify ) {
+nData.prototype._Data_table = function ( table ) {
+	table = table || this._Param.main;			// 如果没有指定数据表，则调用默认的
 
-	if ( !classify )
-		classify = this._Datas._default;		// 如果没有指定数据表，则调用默认的
+	var result = this._Datas[table];
 
-	var result = this._Datas[classify];
-
-	if ( !result )
-		result = this._Datas[classify] = {};	// 如果没有此数据表，则创建
+	if ( !result ) {
+		result = {
+			_table: table
+		};
+		this._Datas[table] = result;			// 如果没有此数据表，则创建
+	}
 
 	this._Data_length(result);					// 获取数据长度
 
@@ -119,40 +137,12 @@ nData.prototype._Data_init = function ( value ) {
 	var that = this,
 		data = $.extend({}, value);
 
-	value = $.extend(value, {
-		_el: null,					// 关联的页面元素
-		_get: function ( key ) {			// 获取数据
-			if ( key )
-				return data[key];
-			else
-				return data;
-		},
-		_set: function ( value ) {	// 设置数据
-			that._Data_setItem(this, value);
-			that._Method_emit('set', this);
-		},
-		_del: function () {			// 删除数据
-			that._Data_delete(this);
-			that._Method_emit('del', this);
-		},
-		// _el: function ( el ) {	// 设置关联元素
-		// 	this.el = el;
-		// 	that._Method_emit('el', this);
-		// 	return el;
-		// },
-		_show: function () {		// 显示元素
-			if ( this.el )
-				this.el.show();
-			that._Method_emit('show', this);
-		},
-		_hide: function () {		// 隐藏元素
-			if ( this.el )
-				this.el.hide();
-			that._Method_emit('hide', this);
-		},
-		_invert: function () {		// 反选其他对象数据
-		}
-	});
+	// value = $.extend(value, {
+	// 	_table: null,						// 数据的所属
+	// 	_el: null,							// 关联的页面元素
+	// });
+
+	value = that._Method_bind(value);
 
 	that._Method_emit('add', value);
 
@@ -164,13 +154,13 @@ nData.prototype._Data_init = function ( value ) {
 *  保存数据，并对数据进行初始化
 *
 *  @param {object} value
-*  @param {string} classify = 选填，需要保存到的指定类，默认为 default
+*  @param {string} table = 选填，需要保存到的指定类，默认为 default
 *
 *  @return {object}
 *  @private
 */
-nData.prototype._Data_add = function ( value, classify ) {
-	var data = this._Data_classify(classify),
+nData.prototype._Data_add = function ( value, table ) {
+	var data = this._Data_table(table),
 		key = data._key,
 		len = data._len;
 
@@ -182,7 +172,7 @@ nData.prototype._Data_add = function ( value, classify ) {
 		if ( !key )											// 如果数据表没有主键，则直接保存的数据
 			data[len] = value;
 
-		if ( key && $.isPlainObject(value) && value[key] )	// 如果数据表有主键，且对象数据账包含此主键值
+		else if ( $.isPlainObject(value) && value[key] )	// 如果数据表有主键，且对象数据账包含此主键值
 			data[value[key]] = value;
 	}
 
@@ -222,7 +212,7 @@ nData.prototype._Data_get = function ( param ) {
 	param = param || {};
 
 	var datas = this._Datas,
-		table = param.table ? this._Method_repeat(param.table) : datas._default,
+		table = param.table ? this._Comm_repeat(param.table) : this._Param.main,
 		length = 0,
 		result = {};
 
@@ -256,43 +246,26 @@ nData.prototype._Data_get = function ( param ) {
 
 
 /**
-*  获取数据元素，根据唯一值
+*  获取数据元素，根据主键
 *
-*  @param {string} key
+*  @param {*} param
 *
 *  @return {object|array}
 *  @private
 */
-nData.prototype._Data_getByKey = function ( key, param ) {
+nData.prototype._Data_getByKey = function ( param ) {
 	param = param || {};
 
 	var result = [],
 		datas = this._Data_get(param);
 
-	if ( typeof key == 'string' && datas[key] )
-		result.push(datas[key]);
+	if ( typeof param.value == 'string' )
+		result.push(datas[param.value]);
 
-	return result;
-}
-
-
-/**
-*  获取数据元素集合，根据多个唯一值
-*
-*  @param {array<string>} keys
-*  @return {array<object>}
-*  @private
-*/
-nData.prototype._Data_getByKeys = function ( keys, param ) {
-	param = param || {};
-
-	var result = [],
-		datas = this._Data_get(param);
-
-	if ( $.isArray(keys) ) {
-		for ( var i = 0; i < keys.length; i++ ) {
-			if ( datas[keys[i]] )
-				result.push(datas[keys[i]]);
+	if ( $.isArray(param.value) ) {
+		for ( var i = 0; i < param.value.length; i++ ) {
+			if ( datas[param.value[i]] )
+				result.push(datas[param.value[i]]);
 		}
 	}
 
@@ -316,19 +289,20 @@ nData.prototype._Data_getBySearchItem = function ( content, value, term ) {
 	if ( $.isPlainObject(content) ) {
 		for ( var key in content ) {
 			if ( $.isArray(term) ) {
-				if ( term.indexOf(key) >= 0 && this._Method_isContains(content[key], value) ) {
+				if ( term.indexOf(key) >= 0 && this._Comm_isContains(content[key], value) ) {
 					result = true;
 					break;
 				}
 			} else {
-				if ( result = this._Method_isContains(content[key], value) )
+				if ( result = this._Comm_isContains(content[key], value) )
 					break;
 			}
 		}
 	}
-	else if ( !term && this._Method_isContains(content, value) ) {
+	else if ( !term && this._Comm_isContains(content, value) ) {
 		result = true;
 	}
+
 
 	return result;
 }
@@ -367,13 +341,12 @@ nData.prototype._Data_getBySearch = function ( value, param ) {
 *  @return {array<object>} 
 *  @private
 */
-nData.prototype._Data_getByPage = function ( param ) {
-	param = param || {};
-
+nData.prototype._Data_getByPage = function ( datas ) {
 	var result = [],
-		datas = this._Data_getAll(param),
-		page = param.page || this._Param.page,
-		number = param.number || this._Param.number;
+		page = this._Param.page,
+		number = this._Param.number;
+
+	datas = datas || this._Data_getAll();
 
 	if ( datas.length )
 		result = datas.slice(page * number, (page + 1) * number);
@@ -409,14 +382,18 @@ nData.prototype._Data_getAll = function ( param ) {
 *  @return {string|object}
 *  @private
 */
-nData.prototype._Data_setItem = function ( obj, value ) {
+nData.prototype._Data_setItem = function ( obj, key, value ) {
 
 	if ( typeof obj == 'string' )
 		obj = this._Data_getByKey(obj);
 
-	if ( $.isPlainObject(obj) && $.isPlainObject(value) ) {
-		for ( var key in value ) {
-			obj[key] = value[key];
+	if ( $.isPlainObject(obj) ) {
+		if ( typeof key == 'string' && value )
+			obj[key] = value;
+
+		else if ( $.isPlainObject(value) ) {
+			for ( var key in value )
+				obj[key] = value[key];
 		}
 	}
 
@@ -444,6 +421,36 @@ nData.prototype._Data_delete = function ( obj ) {
 }
 
 
+/**
+*  矫正获取参数
+*
+*  @param {string|object} value = 搜索关键之
+*  @param {string|object} detail = 搜索详细
+*
+*  @return {string|object}
+*  @private
+*/
+nData.prototype._Data_correct = function ( value, detail ) {
+	var result = {};
+
+	if ( $.type(value) == 'string' )
+		result.value = value;
+
+	else if ( $.isPlainObject(value) )
+		result = value;
+
+	if ( $.type(detail) == 'string' )
+		result.mode = detail;
+
+	else if ( $.isPlainObject(detail) )
+		result = detail;
+
+	if ( !result.mode )
+		result.mode = 'key';
+
+	return result;
+}
+
 
 
 
@@ -452,16 +459,6 @@ nData.prototype._Data_delete = function ( obj ) {
 //  Style_ 元素及样式管理类
 //
 /////////////////////////////
-
-
-/**
-*  创建元素
-*
-*  @private
-*/
-nData.prototype._Styel_add = function () {
-
-}
 
 
 
@@ -475,125 +472,11 @@ nData.prototype._Styel_add = function () {
 
 
 /**
-*  扩展数据
-*
-*  @private
-*/
-nData.prototype._Comm_array = function ( value ) {
-	$.extend(value, {
-		_gets: function () {
-			var result = [];
-			$(this).each(function(i, val){
-				result.push(val._get());
-			});
-			return result;
-		},
-		_sets: function ( value ) {
-			$(this).each(function(i, val){
-				val._set(value);
-			});
-			return this;
-		},
-		_dels: function () {
-			$(this).each(function(i, val){
-				val._del();
-			});
-			return this;
-		},
-		_els: function ( el ) {	// 设置关联元素
-			var result = [];
-			$(this).each(function(i, val){
-				result.push(val._el());
-			});
-			return result;
-		},
-		_shows: function () {
-			$(this).each(function(i, val){
-				val.el.show();
-			});
-			return this;
-		},
-		_hides: function ( ishow ) {
-			$(this).each(function(i, val){
-				val.el.hide();
-			});
-			return this;
-		}
-	});
-
-	return value;
-}
-
-
-
-
-
-///////////////////////////////////////////////////////////
-// 
-//  Method_ 数据方法扩展
-//
-/////////////////////////////
-
-
-/**
-*  回复监听
-*
-*  @private
-*/
-nData.prototype._Method_emit = function ( key, obj ) {
-	var param = this._Param;
-	if ( this._Ons[key] ) {
-		$(this._Ons[key]).each(function(i, callback){
-			callback(obj, param);
-		});
-	}
-}
-
-
-/**
-*  设置配置参数
-*
-*  @private
-*/
-nData.prototype._Method_setParam = function ( value ) {
-	if ( $.isPlainObject(value) ) {
-		for ( var key in value ) {
-			this._Param[key] = value[key];
-		}
-	}
-}
-
-
-/**
-*  自定义数据扩展方法
-*
-*  @private
-*/
-nData.prototype._Method_extend = function ( event, callback, type ) {
-	if ( $.isPlainObject(value) ) {
-		for ( var key in value ) {
-			this._Param[key] = value[key];
-		}
-	}
-}
-
-
-/**
-*  设置配置参数
-*
-*  @private
-*/
-nData.prototype._Method_ajax = function ( value ) {
-	$.ajax(value);
-}
-
-
-/**
 *  数据去重复
 *
 *  @private
 */
-nData.prototype._Method_repeat = function ( value ) {
+nData.prototype._Comm_repeat = function ( value ) {
 	var result = [];
 	
 	if ( $.isArray(value) ) {
@@ -615,7 +498,7 @@ nData.prototype._Method_repeat = function ( value ) {
 *
 *  @private
 */
-nData.prototype._Method_isHave = function ( object, keys ) {
+nData.prototype._Comm_isHave = function ( object, keys ) {
 	var result = false;
 	
 	if ( typeof keys == 'string' )
@@ -633,11 +516,11 @@ nData.prototype._Method_isHave = function ( object, keys ) {
 
 
 /**
-*  判断是否包含
+*  判断一个值是否包含另外一个值
 *
 *  @private
 */
-nData.prototype._Method_isContains = function ( content, value ) {
+nData.prototype._Comm_isContains = function ( content, value ) {
 	var result = false;
 	
 	if ( $.isFunction(value) )
@@ -656,6 +539,183 @@ nData.prototype._Method_isContains = function ( content, value ) {
 	return result;
 }
 
+
+/**
+*  扩展数据对象数组
+*
+*  @private
+*/
+nData.prototype._Comm_array = function ( value ) {
+	if ( value.length )
+		value.__proto__ = $.extend(value.__proto__, value[0]);
+
+	return value;
+}
+
+
+
+
+///////////////////////////////////////////////////////////
+// 
+//  Method_ 数据方法扩展
+//
+/////////////////////////////
+
+
+/**
+*  回复监听
+*
+*  @param {string} type = 监听类型
+*  @param {*} data = 监听的数据
+*  @param {object} detail = 监听详细细节
+*
+*  @private
+*/
+nData.prototype._Method_emit = function ( type, data, detail ) {
+	var param = this._Param;
+
+	detail = detail || {};
+
+	if ( this._Ons[type] ) {
+		$(this._Ons[type]).each(function(i, callback){
+			callback(data, {
+				type: type,
+				value: detail.value,
+				old: detail.old
+			});
+		});
+	}
+}
+
+
+/**
+*  设置配置参数
+*
+*  @private
+*/
+nData.prototype._Method_setParam = function ( value ) {
+	if ( $.isPlainObject(value) ) {
+		for ( var key in value ) {
+			this._Param[key] = value[key];
+		}
+	}
+}
+
+
+/**
+*  设置配置参数
+*
+*  @private
+*/
+nData.prototype._Method_ajax = function ( value ) {
+	$.ajax(value);
+}
+
+
+/**
+*  扩展数据方法
+*
+*  @param {string|object} value = 绑定名称或者多个绑定事件对象
+*  @param {function} callback = 绑定事件
+*
+*  @return {object} data
+*  @private
+*/
+nData.prototype._Method_define = function ( value, callback ) {
+
+	if ( $.isPlainObject(value) ) {
+		for ( var key in value ) {
+			if ( $.isFunction(value[key]) )
+				this._Define[key] = value[key];
+		}
+	}
+	else if ( typeof value == 'string' ) {
+		this._Define[value] = callback;
+	}
+}
+
+
+/**
+*  绑定数据方法
+*
+*  @param {object} data = 目标对象数据
+*
+*  @return {object} data
+*  @private
+*/
+nData.prototype._Method_bind = function ( data ) {
+	var value = {},
+		key;
+
+	// 绑定数据监听事件
+	for ( key in this._Define ) {
+		value['_' + key] = this._Define[key];
+		this._Method_emit(key, this);
+	}
+
+	return $.extend(data, value);
+}
+
+
+/**
+*  功能默认数据方法
+*
+*  @private
+*/
+nData.prototype._Method_default = function () {
+	var that = this;
+
+	// 设置数据
+	this._Method_define({
+
+		// 更新数据
+		update: function ( key, value ) {
+			console.log(this);
+			that._Data_setItem(this, key, value);
+		},
+
+		// 删除数据
+		delete: function () {
+			that._Data_delete(this);
+		},
+	});
+
+
+/*
+
+
+		_table: null,						// 数据的所属
+		_el: null,							// 关联的页面元素
+		_get: function ( key ) {			// 获取数据
+			if ( key )
+				return data[key];
+			else
+				return data;
+		},
+		_del: function () {					// 删除数据
+			that._Data_delete(this);
+			that._Method_emit('del', this);
+		},
+		// _el: function ( el ) {			// 设置关联元素
+		// 	this.el = el;
+		// 	that._Method_emit('el', this);
+		// 	return el;
+		// },
+		_show: function () {				// 显示元素
+			if ( this.el )
+				this.el.show();
+			that._Method_emit('show', this);
+		},
+		_hide: function () {				// 隐藏元素
+			if ( this.el )
+				this.el.hide();
+			that._Method_emit('hide', this);
+		},
+		_invert: function () {				// 反选其他对象数据
+		}
+*/
+
+}
 
 
 
@@ -717,8 +777,8 @@ nData.prototype.add = function ( value, classify ) {
 *  获取
 *
 *  @param {string|function|array} value = 获取条件
-*  @param {string} param = 设置获取的方式 'key'（默认）, 'search', 'param', 'lib'
-*  		  {object} param = 详细设置：
+*  @param {string} detail = 设置获取的方式 'key'（默认）, 'search', 'param', 'lib'
+*  		  {object} detail = 详细设置：
 *				mode = {string} 设置获取的方式 'key'（默认）, 'search', 'param', 'lib'；
 *				search = {string|array<string>} 搜索明细，注：获取方式为 search 时，此参数才有效；
 *				invert = {boolean} 是否反选（默认false）；
@@ -728,44 +788,24 @@ nData.prototype.add = function ( value, classify ) {
 *  @return {object} 返回元素对象
 *  @private
 */
-nData.prototype.get = function ( value, param ) {
+nData.prototype.get = function ( value, detail ) {
 	var result = [],
-		conf = {};
+		param = this._Data_correct(value, detail);
 
-	if ( $.isPlainObject(value) ) {
-		param = value;
-		value = '';
-	}
-
-	if ( typeof param == 'string' )
-		conf.mode = param;
-
-	else if ( $.isPlainObject(param) )
-		conf = param;
-
-	if ( !conf.mode )
-		conf.mode = 'key';
-
-	param = conf;
-
-	if ( !value )
+	if ( !param.value )
 		result = this._Data_getAll(param);
 
-	else if ( typeof value == 'string' && conf.mode == 'key' )
-		result = this._Data_getByKey(value, param);
+	else if ( param.mode == 'key' )
+		result = this._Data_getByKey(param);
 
-	else if ( $.isArray(value) && conf.mode == 'key' )
-		result = this._Data_getByKeys(value, param);
-
-	else if ( !!value && conf.mode == 'search' )
+	else if ( param.mode == 'search' )
 		result = this._Data_getBySearch(value, param); 
-
-	else if ( typeof value == 'string' && conf.mode == 'lib' )
-		result = [];
 	
-	else if ( typeof value == 'string' && conf.mode == 'param' )
-		result = this._Param[value];
+	else if ( param.mode == 'param' )
+		result = this._Param[param.value];
 
+	else if ( param.mode == 'lib' )
+		result = [];
 
 	if ( $.isArray(result) && result.length ) {
 		result = this._Data_getByPage(result);	// 数据分页
@@ -782,8 +822,8 @@ nData.prototype.get = function ( value, param ) {
 *  @param {object} value = 设置配置参数
 *
 *  		table = 指定数据表
-*  		key = 指定主键
-*  		default = 默认管理数据表
+*  		key = 设置主键
+*  		main = 设置默认数据表
 *
 *  @return {object} 返回 nData 功能
 *  @private
@@ -797,13 +837,12 @@ nData.prototype.set = function ( key, value ) {
 	else if ( $.isPlainObject(key) )
 		param = key;
 
-	if ( param.default )
-		this._Datas._default = param.default;				// 设置默认数据表
-
 	if ( param.key )
-		this._Data_classify(param.table)._key = param.key;	// 设置指定数据表的主键
+		this._Data_table(param.table)._key = param.key;	// 设置指定数据表的主键
 
 	this._Method_setParam(param);
+
+	return this;
 }
 
 
@@ -833,7 +872,7 @@ nData.prototype.on = function ( key, callback ) {
 *  @return {object} 返回 nData 功能
 *  @private
 */
-nData.prototype.extend = function ( event, callback, type ) {
+nData.prototype.define = function ( event, callback, type ) {
 
 }
 

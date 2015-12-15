@@ -84,11 +84,14 @@
 
 	data.set({
 		key: 'name'
+	}).set({
+		table: 'status',
+		key: 'color'
 	});
 
 	data.add(datas);
 
-	data.add(datas, 'status');
+	// data.add(datas, 'status');
 
 	data.add(100, 'number');
 
