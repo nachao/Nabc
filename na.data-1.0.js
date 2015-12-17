@@ -57,13 +57,6 @@ function nData ( param ) {
 	*  @public
 	*/
 	this._Method_setParam(param);
-
-
-	/**
-	*  初始化数据方法
-	*  @public
-	*/
-	this._Method_default();
 }
 
 
@@ -142,9 +135,9 @@ nData.prototype._Data_init = function ( value ) {
 	// 	_el: null,							// 关联的页面元素
 	// });
 
-	value = that._Method_bind(value);
+	// value = that._Method_bind(value);
 
-	that._Method_emit('add', value);
+	that._Method_emit(data);	// 数据监听
 
 	return value;
 }
@@ -259,7 +252,7 @@ nData.prototype._Data_getByKey = function ( param ) {
 	var result = [],
 		datas = this._Data_get(param);
 
-	if ( typeof param.value == 'string' )
+	if ( typeof param.value == 'string' && datas[param.value] )
 		result.push(datas[param.value]);
 
 	if ( $.isArray(param.value) ) {
@@ -268,6 +261,7 @@ nData.prototype._Data_getByKey = function ( param ) {
 				result.push(datas[param.value[i]]);
 		}
 	}
+
 
 	return result;
 }
@@ -303,7 +297,6 @@ nData.prototype._Data_getBySearchItem = function ( content, value, term ) {
 		result = true;
 	}
 
-
 	return result;
 }
 
@@ -324,12 +317,14 @@ nData.prototype._Data_getBySearch = function ( value, param ) {
 		search = param.search;
 
 	if ( typeof param.search == 'string' )
-		search = [param.search]; 
+		search = [param.search];
 
 	for ( var key in datas ) {
+
 		if ( this._Data_getBySearchItem(datas[key], value, search) )
 			result.push(datas[key]);
 	}
+
 
 	return result;
 }
@@ -533,23 +528,10 @@ nData.prototype._Comm_isContains = function ( content, value ) {
 		result = !!content[value];
 
 	else if ( $.isArray(content) ) {
-		result = content.indexOf(value) >= 0;
+		result = content.toString().indexOf(value) >= 0;
 	}
 
 	return result;
-}
-
-
-/**
-*  扩展数据对象数组
-*
-*  @private
-*/
-nData.prototype._Comm_array = function ( value ) {
-	if ( value.length )
-		value.__proto__ = $.extend(value.__proto__, value[0]);
-
-	return value;
 }
 
 
@@ -565,26 +547,25 @@ nData.prototype._Comm_array = function ( value ) {
 /**
 *  回复监听
 *
-*  @param {string} type = 监听类型
 *  @param {*} data = 监听的数据
-*  @param {object} detail = 监听详细细节
 *
 *  @private
 */
-nData.prototype._Method_emit = function ( type, data, detail ) {
+nData.prototype._Method_emit = function ( data ) {
 	var param = this._Param;
 
-	detail = detail || {};
-
-	if ( this._Ons[type] ) {
-		$(this._Ons[type]).each(function(i, callback){
-			callback(data, {
-				type: type,
-				value: detail.value,
-				old: detail.old
-			});
+	// 绑定数据监听
+	Object.observe(data, function(changes){
+		$(changes).each(function(i, value){
+			if ( this._Ons[value.type] ) {
+				$(this._Ons[value.type]).each(function(i, callback){
+					callback(value);
+				});
+			}
+			if ( this._Ons.on )
+				this._Ons.on(value);
 		});
-	}
+	});
 }
 
 
@@ -599,16 +580,6 @@ nData.prototype._Method_setParam = function ( value ) {
 			this._Param[key] = value[key];
 		}
 	}
-}
-
-
-/**
-*  设置配置参数
-*
-*  @private
-*/
-nData.prototype._Method_ajax = function ( value ) {
-	$.ajax(value);
 }
 
 
@@ -643,17 +614,53 @@ nData.prototype._Method_define = function ( value, callback ) {
 *  @return {object} data
 *  @private
 */
-nData.prototype._Method_bind = function ( data ) {
+nData.prototype._Method_bind = function ( datas ) {
+	var result = [],
+		that = this;
+
 	var value = {},
 		key;
 
-	// 绑定数据监听事件
-	for ( key in this._Define ) {
-		value['_' + key] = this._Define[key];
-		this._Method_emit(key, this);
+	for ( key in that._Define ) {
+		value['_' + key] = that._Define[key];
 	}
 
-	return $.extend(data, value);
+	// 绑定自定义数据方法 至单个数据上
+	$(datas).each(function(i, data){
+		result.push($.extend({}, data, value));
+	});
+
+	// 绑定自定义数据方法 至数组上
+	if ( result.length ) {
+		for ( key in that._Define ) {
+			value['_' + key] = function () {
+				var param = arguments;
+				$(result).each(function(i, data){
+					data['_' + key].apply(data, param);
+				});
+			}
+		}
+		result = $.extend(result, value);
+	}
+
+	return result;
+}
+
+
+/**
+*  重置绑定全部数据方法
+*
+*  @param {object} data = 目标对象数据
+*
+*  @return {object} data
+*  @private
+*/
+nData.prototype._Method_bindAll = function ( param ) {
+	var datas = this._Data_getAll(param);
+
+	for ( key in datas ) {
+		this._Method_bind(datas[key]);
+	}
 }
 
 
@@ -666,19 +673,18 @@ nData.prototype._Method_default = function () {
 	var that = this;
 
 	// 设置数据
-	this._Method_define({
+	// this._Method_define({
 
-		// 更新数据
-		update: function ( key, value ) {
-			console.log(this);
-			that._Data_setItem(this, key, value);
-		},
+	// 	// 更新数据
+	// 	update: function ( key, value ) {
+	// 		that._Data_setItem(this, key, value);
+	// 	},
 
-		// 删除数据
-		delete: function () {
-			that._Data_delete(this);
-		},
-	});
+	// 	// 删除数据
+	// 	delete: function () {
+	// 		that._Data_delete(this);
+	// 	},
+	// });
 
 
 /*
@@ -694,22 +700,18 @@ nData.prototype._Method_default = function () {
 		},
 		_del: function () {					// 删除数据
 			that._Data_delete(this);
-			that._Method_emit('del', this);
 		},
 		// _el: function ( el ) {			// 设置关联元素
 		// 	this.el = el;
-		// 	that._Method_emit('el', this);
 		// 	return el;
 		// },
 		_show: function () {				// 显示元素
 			if ( this.el )
 				this.el.show();
-			that._Method_emit('show', this);
 		},
 		_hide: function () {				// 隐藏元素
 			if ( this.el )
 				this.el.hide();
-			that._Method_emit('hide', this);
 		},
 		_invert: function () {				// 反选其他对象数据
 		}
@@ -758,16 +760,16 @@ nData.prototype._Lib_init = function () {
 *  添加数据
 *
 *  @param {object|array<object>} value = 数据内容必须包含 id
-*  @param {string} classify = 选填，保存到指定的数据分类中
+*  @param {string} table = 选填，保存数据至指定的表，默认为 default 表
 *
 *  @return {object} 返回元素对象
 *  @private
 */
-nData.prototype.add = function ( value, classify ) {
+nData.prototype.add = function ( value, table ) {
 	if ( $.isArray(value) )
-		this._Data_adds(value, classify);
+		this._Data_adds(value, table);
 	else 
-		this._Data_add(value, classify);
+		this._Data_add(value, table);
 
 	return value;
 }
@@ -809,7 +811,7 @@ nData.prototype.get = function ( value, detail ) {
 
 	if ( $.isArray(result) && result.length ) {
 		result = this._Data_getByPage(result);	// 数据分页
-		result = this._Comm_array(result);		// 数据扩展方法
+		result = this._Method_bind(result);		// 数据扩展方法
 	}
 
 	return result;
@@ -828,7 +830,7 @@ nData.prototype.get = function ( value, detail ) {
 *  @return {object} 返回 nData 功能
 *  @private
 */
-nData.prototype.set = function ( key, value ) {
+nData.prototype.config = function ( key, value ) {
 	var param = {};
 
 	if ( typeof key == 'string' && value ) 
@@ -861,29 +863,20 @@ nData.prototype.on = function ( key, callback ) {
 		else
 			this._Ons[key] = [callback];
 	}
+	else if ( $.isFunction(key) ) {
+		this._Ons['on'] = key;
+	}
 }
 
 
 /**
 *  扩展数据方法
 *
-*  @param {string} key = 监听数据操作：set、del、add
-*  @param {function} callback = 监听操作发生时，执行的函数
-*  @return {object} 返回 nData 功能
-*  @private
-*/
-nData.prototype.define = function ( event, callback, type ) {
-
-}
-
-
-/**
-*  获取后台数据
+*  @param {string|object} value = 绑定名称或者多个绑定事件对象
+*  @param {function} callback = 绑定事件
 *
-*  @param {object} value
 *  @private
 */
-nData.prototype.ajax = function ( value ) {
-	this._Method_ajax(value);
+nData.prototype.define = function ( value, callback, param ) {
+	this._Method_define(value, callback);
 }
-

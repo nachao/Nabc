@@ -76,33 +76,94 @@
 		        trackers: [ '89600FFFFF0000000031' ]
 		    }
 		]
+
+
+
+			// 生成100条模拟数据
+			var data2 = [];
+			for ( var i = 0 ; i < 100; i++ ) {
+				data2.push({
+					id: 'id_' + i,
+					value: parseInt(Math.random() * 100 * i)
+				});
+			}
+
+
+
 	
 
 
-	var data = new nData();
+
+			// 使用
+			var data = new nData();
 
 
-	data.set({
-		key: 'name'
-	}).set({
-		table: 'status',
-		key: 'color'
-	});
 
-	data.add(datas);
-
-	// data.add(datas, 'status');
-
-	data.add(100, 'number');
-
-	data.add('dahsouidyqwoiue120837019283熬时间的asjd123', 'string');
-
-	data.add({
-		val: [1,2,3]
-	}, 'array');
+			// 设置默认表主键
+			data.config({
+				key: 'name'
+			});
 
 
-	console.log( data );
+
+			// 创建 status 表并设置主键为 `color`
+			data.config({
+				table: 't_status',
+				key: 'color'
+			});
+
+
+
+
+			// 导入数据
+			data.add(datas);
+
+			// data.add(datas, 'status');
+
+			data.add(100, 't_number');
+
+			data.add('dahsouidyqwoiue120837019283熬时间的asjd123', 't_string');
+
+			data.add({
+				val: [1,2,3]
+			}, 't_array');
+
+			data.add(data2, 'asd_list');
+
+
+
+
+
+
+			// 监听数据
+			data.on(function(res){
+				console.log(res);
+			});
+
+
+			// 扩展数据方法
+			data.define('show', function(){
+				$('body').append('<h3 id="'+ this.id +'">'+ this.name +'</h3>');
+			});
+
+			data.define({
+				hide: function(){
+					$('#' + this.id).remove();
+				}
+			});
+
+
+
+
+
+
+
+
+
+
+			
+			console.log( data );
+
 
 
 
